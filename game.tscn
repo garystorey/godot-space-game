@@ -1,0 +1,86 @@
+[gd_scene load_steps=6 format=3 uid="uid://b3vu7mn112co7"]
+
+[ext_resource type="Script" uid="uid://dku106wva4gda" path="res://game.gd" id="1_7jktm"]
+[ext_resource type="LabelSettings" uid="uid://t8pg4f2qqfb6" path="res://labelColor.tres" id="1_feb5d"]
+[ext_resource type="Texture2D" uid="uid://bhe3qhx04j2im" path="res://assets/ComfyUI_00046_.png" id="2_7jktm"]
+[ext_resource type="Script" uid="uid://bgcu4c81d7px5" path="res://player.gd" id="2_fc0e3"]
+[ext_resource type="Texture2D" uid="uid://bycrejhxgbdgl" path="res://assets/ship.png" id="4_7jktm"]
+
+[node name="Game" type="Node2D"]
+script = ExtResource("1_7jktm")
+
+[node name="Background" type="Sprite2D" parent="."]
+show_behind_parent = true
+position = Vector2(572, 338)
+texture = ExtResource("2_7jktm")
+
+[node name="Player" type="Area2D" parent="."]
+position = Vector2(610, 552)
+rotation = -1.5707964
+scale = Vector2(0.7, 0.7)
+collision_mask = 2
+linear_damp = 2.0
+script = ExtResource("2_fc0e3")
+
+[node name="Sprite2D" type="Sprite2D" parent="Player"]
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("4_7jktm")
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Player"]
+unique_name_in_owner = true
+build_mode = 1
+polygon = PackedVector2Array(67.99997, -2, 70.99997, -2, -10, 25, -18, 48, -26, 49, -53, 2, -53, -6, -26, -54, -17, -55, -8, -28, 70.99997, -2)
+
+[node name="Header" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Container" type="HBoxContainer" parent="Header"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+theme_override_constants/separation = 100
+
+[node name="Score" type="HBoxContainer" parent="Header/Container"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="ScoreLabel" type="Label" parent="Header/Container/Score"]
+layout_mode = 2
+text = "Score:"
+label_settings = ExtResource("1_feb5d")
+
+[node name="ScoreText" type="Label" parent="Header/Container/Score"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "0"
+label_settings = ExtResource("1_feb5d")
+
+[node name="RoundNumber" type="HBoxContainer" parent="Header/Container"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="RoundLabel" type="Label" parent="Header/Container/RoundNumber"]
+layout_mode = 2
+text = "Level"
+label_settings = ExtResource("1_feb5d")
+
+[node name="RoundText" type="Label" parent="Header/Container/RoundNumber"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "0"
+label_settings = ExtResource("1_feb5d")
+
+[node name="ScoreTimer" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 0.1
+autostart = true
+
+[node name="RoundTimer" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 60.0
+autostart = true
+
+[connection signal="body_entered" from="Player" to="." method="_on_player_body_entered"]

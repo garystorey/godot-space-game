@@ -1,0 +1,21 @@
+[gd_scene load_steps=4 format=3 uid="uid://q7qqqk6bvsq4"]
+
+[ext_resource type="Script" uid="uid://ckgphjq13e5n2" path="res://asteroid.gd" id="1_p0ukn"]
+[ext_resource type="Texture2D" uid="uid://dmuf78cu3k1mm" path="res://assets/asteroid_01.png" id="1_u87q6"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_7jktm"]
+radius = 41.109608
+
+[node name="Asteroid" type="RigidBody2D"]
+collision_layer = 2
+collision_mask = 3
+constant_force = Vector2(13, 0)
+script = ExtResource("1_p0ukn")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.2, 0.2)
+texture = ExtResource("1_u87q6")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -1)
+shape = SubResource("CircleShape2D_7jktm")
