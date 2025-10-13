@@ -9,6 +9,7 @@ radius = 41.109608
 [node name="Asteroid" type="RigidBody2D"]
 collision_layer = 2
 collision_mask = 3
+linear_velocity = Vector2(41, 0)
 constant_force = Vector2(13, 0)
 script = ExtResource("1_p0ukn")
 

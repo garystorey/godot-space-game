@@ -1,10 +1,16 @@
-[gd_scene load_steps=6 format=3 uid="uid://b3vu7mn112co7"]
+[gd_scene load_steps=8 format=3 uid="uid://b3vu7mn112co7"]
 
 [ext_resource type="Script" uid="uid://dku106wva4gda" path="res://game.gd" id="1_7jktm"]
 [ext_resource type="LabelSettings" uid="uid://t8pg4f2qqfb6" path="res://labelColor.tres" id="1_feb5d"]
 [ext_resource type="Texture2D" uid="uid://bhe3qhx04j2im" path="res://assets/ComfyUI_00046_.png" id="2_7jktm"]
 [ext_resource type="Script" uid="uid://bgcu4c81d7px5" path="res://player.gd" id="2_fc0e3"]
 [ext_resource type="Texture2D" uid="uid://bycrejhxgbdgl" path="res://assets/ship.png" id="4_7jktm"]
+[ext_resource type="AudioStream" uid="uid://kje8rf4vuu8k" path="res://assets/wooden-thud-mono-6244.mp3" id="5_ryrav"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_7jktm"]
+font_size = 48
+font_color = Color(1, 0.38039216, 1, 1)
+outline_size = 3
 
 [node name="Game" type="Node2D"]
 script = ExtResource("1_7jktm")
@@ -15,6 +21,7 @@ position = Vector2(572, 338)
 texture = ExtResource("2_7jktm")
 
 [node name="Player" type="Area2D" parent="."]
+unique_name_in_owner = true
 position = Vector2(610, 552)
 rotation = -1.5707964
 scale = Vector2(0.7, 0.7)
@@ -30,6 +37,11 @@ texture = ExtResource("4_7jktm")
 unique_name_in_owner = true
 build_mode = 1
 polygon = PackedVector2Array(67.99997, -2, 70.99997, -2, -10, 25, -18, 48, -26, 49, -53, 2, -53, -6, -26, -54, -17, -55, -8, -28, 70.99997, -2)
+
+[node name="Sfx" type="AudioStreamPlayer2D" parent="Player"]
+unique_name_in_owner = true
+stream = ExtResource("5_ryrav")
+volume_db = 8.0
 
 [node name="Header" type="Control" parent="."]
 layout_mode = 3
@@ -73,6 +85,21 @@ layout_mode = 2
 text = "0"
 label_settings = ExtResource("1_feb5d")
 
+[node name="Lives" type="HBoxContainer" parent="Header/Container"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="LivesLabel" type="Label" parent="Header/Container/Lives"]
+layout_mode = 2
+text = "Lives: "
+label_settings = ExtResource("1_feb5d")
+
+[node name="LivesText" type="Label" parent="Header/Container/Lives"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "5"
+label_settings = ExtResource("1_feb5d")
+
 [node name="ScoreTimer" type="Timer" parent="."]
 unique_name_in_owner = true
 wait_time = 0.1
@@ -80,7 +107,25 @@ autostart = true
 
 [node name="RoundTimer" type="Timer" parent="."]
 unique_name_in_owner = true
-wait_time = 60.0
+wait_time = 15.0
+autostart = true
+
+[node name="RoundDisplay" type="Label" parent="."]
+unique_name_in_owner = true
+visible = false
+offset_left = 425.0
+offset_top = 150.0
+offset_right = 650.0
+offset_bottom = 225.0
+text = "Level 1"
+label_settings = SubResource("LabelSettings_7jktm")
+horizontal_alignment = 1
+uppercase = true
+
+[node name="RoundDisplayTimer" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 2.5
+one_shot = true
 autostart = true
 
 [connection signal="body_entered" from="Player" to="." method="_on_player_body_entered"]

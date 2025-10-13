@@ -2,7 +2,13 @@ extends Area2D
 
 @onready var collision_polygon_2d: CollisionPolygon2D = %CollisionPolygon2D
 @onready var score_text: Label = %ScoreText
+@onready var lives_text: Label = %LivesText
+@onready var sfx: AudioStreamPlayer2D = %Sfx
 
+@export var max_lives: int = 5
+
+
+signal dead
 # --- Movement (ease-in/out "arrive") ---
 var max_speed: float = 500.0
 var acceleration: float = 2400.0
@@ -10,6 +16,7 @@ var slow_radius: float = 200.0
 var arrive_radius: float = 8.0
 var velocity: Vector2 = Vector2.ZERO
 var target_position: Vector2
+var current_lives: int =5
 
 # --- Knockback (independent from movement) ---
 var knockback_impulse: float = 60.0     # small one-shot impulse
@@ -38,13 +45,7 @@ func _ready() -> void:
 	target_position = global_position
 
 func _process(_delta: float) -> void:
-	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		target_position = get_global_mouse_position()
-		return
-
-	if Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
-		print("We need something here")
-		return
 
 func _physics_process(delta: float) -> void:
 	var to_target: Vector2 = target_position - global_position
@@ -75,18 +76,22 @@ func _physics_process(delta: float) -> void:
 
 	global_position += velocity * delta
 
-	#if get_child_count() > 0:
-		#get_child(0).rotate(1.0 * delta)
 
-# --- Collision handling ---
+func update_lives(amount:int):
+	current_lives = int(lives_text.text)
+	current_lives = current_lives + amount
+	lives_text.text = str(current_lives)
+
 func _on_body_entered(body: Node) -> void:
 	# Signal guard: ensure it's a physics body we can push
 	if not (body is RigidBody2D):
 		return
-
 	var rb: RigidBody2D = body
 	rb.sleeping = false  # wake so impulses/velocity apply immediately
 
+	modulate = Color.RED
+	sfx.play()
+	
 	# Direction AWAY from this Area2D
 	var dir: Vector2 = rb.global_position - global_position
 	if dir == Vector2.ZERO:
@@ -105,9 +110,26 @@ func _on_body_entered(body: Node) -> void:
 	# 3) Cap to avoid extreme speeds
 	if rb.linear_velocity.length() > knockback_max_speed:
 		rb.linear_velocity = rb.linear_velocity.normalized() * knockback_max_speed
+	
+	var score = int(score_text.text) -1000
+	if score <0: 
+		score  = 0
+	score_text.text = str(score)
+	
 
 func _on_body_exited(body: Node) -> void:
 	# Optional: keep for debugging or future logic
 	if not (body is RigidBody2D):
 		return
-	# print("body_exited:", (body as RigidBody2D).name)
+	modulate = Color.WHITE
+	update_lives(-1)
+	print(current_lives)
+	if current_lives <= 0:
+		end_game()
+				
+		# print("body_exited:", (body as RigidBody2D).name)
+
+
+func end_game():
+	visible = false
+	dead.emit()

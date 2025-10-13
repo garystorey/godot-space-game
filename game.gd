@@ -2,17 +2,21 @@ extends Node2D
 
 @onready var score_timer: Timer = %ScoreTimer
 @onready var round_timer: Timer = %RoundTimer
+@onready var round_display_timer: Timer = %RoundDisplayTimer
+
 @onready var score_text: Label = %ScoreText
 @onready var round_text: Label = %RoundText
+@onready var round_display: Label = %RoundDisplay
 
+@onready var player: Area2D = %Player
 
 @export var number_asteroids = 0
 @export var max_scale = 0.2
-@export var points_per_sec =100
+@export var points_per_sec = 50
 
-@export var MAX_ASTEROIDS = 10
-@export var MAX_MASS = 300
-@export var MIN_MASS = 25
+@export var MAX_ASTEROIDS = 5
+@export var MAX_MASS = 250
+@export var MIN_MASS = 50
 
 var rng = RandomNumberGenerator.new()
 
@@ -21,13 +25,22 @@ var asteroid_scene = preload("res://asteroid.tscn")
 func _ready() -> void:
 	score_timer.timeout.connect(_on_score_timer_timeout)
 	round_timer.timeout.connect(_on_round_timer_timeout)
-	round_text.text = str(1)
+	player.connect("dead", _on_dead)
+	round_text.text = str(0)
 	score_text.text = str(0)
+	_on_round_timer_timeout()
 
+func _on_dead():
+	round_timer.stop()
+	score_timer.stop()
+	for asteroid in get_tree().get_nodes_in_group("Asteroids"):
+		asteroid.queue_free()
+	round_display.text ="Game Over"
+	round_display.visible =  true
 
 func _physics_process(_delta: float) -> void:
 	var should_spawn_asteroid = rng.randi_range(0, 100)
-	if should_spawn_asteroid >=99 and number_asteroids< MAX_ASTEROIDS:
+	if should_spawn_asteroid >=80 and number_asteroids< MAX_ASTEROIDS:
 		number_asteroids +=1
 		create_asteroid()
 	
@@ -36,7 +49,7 @@ func create_asteroid():
 		var x = randf_range(80,980)
 		var new_scale = randf_range(0.05, max_scale)
 		
-		new_asteroid.position = Vector2(x,-50)
+		new_asteroid.position = Vector2(x,-250)
 		#new_asteroid.position.y = -50
 		new_asteroid.get_child(0).scale = Vector2(new_scale,new_scale)
 		#new_asteroid.get_child(0).scale.y = new_scale
@@ -44,14 +57,13 @@ func create_asteroid():
 		#new_asteroid.scale.y = new_scale
 		new_asteroid.mass = 200 * new_scale
 		new_asteroid.gravity_scale = randf_range(0.1,1.3) * new_scale
+		new_asteroid.linear_velocity.x = randf_range(0, 120)
 		new_asteroid.add_to_group("Asteroids")
 		add_child(new_asteroid)
 		new_asteroid.asteroid_removed.connect(_on_child_asteroid_removed)
 	
 func _on_child_asteroid_removed():
 	number_asteroids -=1
-
-	
 
 func _on_score_timer_timeout():
 	var score = int(score_text.text)
@@ -65,4 +77,12 @@ func _on_round_timer_timeout():
 	var level = int(round_text.text)
 	level += 1
 	round_text.text = str(level)
+	round_display_timer.start()
+	round_display_timer.timeout.connect(_on_display_timeout)
+	round_display.visible = true
+	round_display.text = "Level "+str(level)
+	
+
+func _on_display_timeout():
+	round_display.visible = false
 	
