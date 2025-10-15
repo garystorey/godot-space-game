@@ -10,10 +10,16 @@ config_version=5
 
 [application]
 
-config/name="BasicGame"
+config/name="Astroid Survival"
 run/main_scene="uid://b3vu7mn112co7"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://assets/icon.svg"
+
+[display]
+
+window/size/mode=2
+window/size/resizable=false
+window/stretch/mode="viewport"
 
 [rendering]
 

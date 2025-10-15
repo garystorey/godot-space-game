@@ -6,6 +6,7 @@ extends Area2D
 @onready var sfx: AudioStreamPlayer2D = %Sfx
 
 @export var max_lives: int = 5
+const hit_sfx = preload("uid://kje8rf4vuu8k")
 
 
 signal dead
@@ -31,6 +32,8 @@ func _ready() -> void:
 	# Connect collision signals ASAP
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
+	
+	sfx.stream = hit_sfx
 
 	# Force the physics broadphase to refresh after the scene is ready
 	# (prevents missed enters if things were spawned overlapped)
@@ -88,7 +91,7 @@ func _on_body_entered(body: Node) -> void:
 		return
 	var rb: RigidBody2D = body
 	rb.sleeping = false  # wake so impulses/velocity apply immediately
-
+	sfx.stream = hit_sfx
 	modulate = Color.RED
 	sfx.play()
 	

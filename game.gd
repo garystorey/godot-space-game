@@ -3,6 +3,7 @@ extends Node2D
 @onready var score_timer: Timer = %ScoreTimer
 @onready var round_timer: Timer = %RoundTimer
 @onready var round_display_timer: Timer = %RoundDisplayTimer
+@onready var sfx: AudioStreamPlayer2D = %Sfx
 
 @onready var score_text: Label = %ScoreText
 @onready var round_text: Label = %RoundText
@@ -21,6 +22,8 @@ extends Node2D
 var rng = RandomNumberGenerator.new()
 
 var asteroid_scene = preload("res://asteroid.tscn")
+const level_sfx = preload("uid://c25wdaajvcfhs")
+
 
 func _ready() -> void:
 	score_timer.timeout.connect(_on_score_timer_timeout)
@@ -75,6 +78,8 @@ func _on_round_timer_timeout():
 	points_per_sec += 50
 	max_scale += 0.05
 	var level = int(round_text.text)
+	sfx.stream = level_sfx
+	sfx.play()
 	level += 1
 	round_text.text = str(level)
 	round_display_timer.start()
