@@ -51,9 +51,21 @@ func _process(_delta: float) -> void:
 		target_position = get_global_mouse_position()
 
 func _physics_process(delta: float) -> void:
+	print(global_position)
+	if global_position.x < 20: 
+		global_position.x= 20
+	if global_position.x > 1135: 
+		global_position.x= 1135
+	if global_position.y > 620:
+		global_position.y = 620
+	if global_position.y < 100:
+		global_position.y = 100
+		
 	var to_target: Vector2 = target_position - global_position
 	var distance: float = to_target.length()
+	
 
+		
 	# Arrive behavior: slow to a stop at the end
 	if distance <= arrive_radius:
 		velocity = velocity.move_toward(Vector2.ZERO, acceleration * delta)

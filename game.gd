@@ -53,14 +53,11 @@ func create_asteroid():
 		var new_scale = randf_range(0.05, max_scale)
 		
 		new_asteroid.position = Vector2(x,-250)
-		#new_asteroid.position.y = -50
 		new_asteroid.get_child(0).scale = Vector2(new_scale,new_scale)
-		#new_asteroid.get_child(0).scale.y = new_scale
 		new_asteroid.scale =  Vector2(new_scale,new_scale)
-		#new_asteroid.scale.y = new_scale
 		new_asteroid.mass = 200 * new_scale
 		new_asteroid.gravity_scale = randf_range(0.1,1.3) * new_scale
-		new_asteroid.linear_velocity.x = randf_range(0, 120)
+		new_asteroid.linear_velocity.x = randf_range(0, 80)
 		new_asteroid.add_to_group("Asteroids")
 		add_child(new_asteroid)
 		new_asteroid.asteroid_removed.connect(_on_child_asteroid_removed)
