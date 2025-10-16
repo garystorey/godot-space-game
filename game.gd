@@ -23,6 +23,7 @@ var rng = RandomNumberGenerator.new()
 
 var asteroid_scene = preload("res://asteroid.tscn")
 const level_sfx = preload("uid://c25wdaajvcfhs")
+var start = preload("uid://c7cdxgg7tixdy").instantiate()
 
 
 func _ready() -> void:
@@ -38,8 +39,8 @@ func _on_dead():
 	score_timer.stop()
 	for asteroid in get_tree().get_nodes_in_group("Asteroids"):
 		asteroid.queue_free()
-	round_display.text ="Game Over"
-	round_display.visible =  true
+	get_tree().root.add_child(start)
+	queue_free()
 
 func _physics_process(_delta: float) -> void:
 	var should_spawn_asteroid = rng.randi_range(0, 100)
@@ -49,7 +50,7 @@ func _physics_process(_delta: float) -> void:
 	
 func create_asteroid():
 		var new_asteroid = asteroid_scene.instantiate();
-		var x = randf_range(80,980)
+		var x = randf_range(0,1100)
 		var new_scale = randf_range(0.05, max_scale)
 		
 		new_asteroid.position = Vector2(x,-250)
@@ -57,7 +58,7 @@ func create_asteroid():
 		new_asteroid.scale =  Vector2(new_scale,new_scale)
 		new_asteroid.mass = 200 * new_scale
 		new_asteroid.gravity_scale = randf_range(0.1,1.3) * new_scale
-		new_asteroid.linear_velocity.x = randf_range(0, 80)
+		new_asteroid.linear_velocity.x = randf_range(-180, 180)
 		new_asteroid.add_to_group("Asteroids")
 		add_child(new_asteroid)
 		new_asteroid.asteroid_removed.connect(_on_child_asteroid_removed)

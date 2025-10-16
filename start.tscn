@@ -1,0 +1,56 @@
+[gd_scene load_steps=4 format=3 uid="uid://c7cdxgg7tixdy"]
+
+[ext_resource type="Texture2D" uid="uid://bhe3qhx04j2im" path="res://assets/ComfyUI_00046_.png" id="1_ots34"]
+[ext_resource type="Script" uid="uid://drb58wvi0md2o" path="res://start.gd" id="1_qn1rc"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_qn1rc"]
+font_size = 92
+font_color = Color(0.7872851, 6.2377454e-05, 0.6180948, 1)
+outline_size = 5
+shadow_size = 21
+shadow_color = Color(0.70056176, 0.34775802, 0.7179617, 0.44313726)
+
+[node name="Start" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_qn1rc")
+
+[node name="BG" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+texture = ExtResource("1_ots34")
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -350.0
+offset_top = -145.0
+offset_right = 350.0
+offset_bottom = -19.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Asteroid Survival"
+label_settings = SubResource("LabelSettings_qn1rc")
+
+[node name="Button" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 418.0
+offset_top = 424.0
+offset_right = 718.0
+offset_bottom = 520.0
+theme_override_colors/font_color = Color(0.3647059, 0.6509804, 0.9647059, 1)
+theme_override_colors/font_outline_color = Color(0.8089983, 0.8089983, 0.8089982, 1)
+theme_override_font_sizes/font_size = 64
+text = "   START   "
