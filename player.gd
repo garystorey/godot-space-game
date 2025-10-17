@@ -51,7 +51,6 @@ func _process(_delta: float) -> void:
 		target_position = get_global_mouse_position()
 
 func _physics_process(delta: float) -> void:
-	print(global_position)
 	if global_position.x < 20: 
 		global_position.x= 20
 	if global_position.x > 1135: 
@@ -63,15 +62,11 @@ func _physics_process(delta: float) -> void:
 		
 	var to_target: Vector2 = target_position - global_position
 	var distance: float = to_target.length()
-	
-
 		
 	# Arrive behavior: slow to a stop at the end
 	if distance <= arrive_radius:
 		velocity = velocity.move_toward(Vector2.ZERO, acceleration * delta)
 		global_position += velocity * delta
-		#if get_child_count() > 0:
-			#get_child(0).rotate(1.0 * delta)
 		return
 
 	# Ease-in/out: target speed scales down inside slow_radius

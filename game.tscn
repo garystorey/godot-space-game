@@ -106,12 +106,12 @@ label_settings = ExtResource("1_feb5d")
 
 [node name="ScoreTimer" type="Timer" parent="."]
 unique_name_in_owner = true
-wait_time = 0.1
+wait_time = 0.25
 autostart = true
 
 [node name="RoundTimer" type="Timer" parent="."]
 unique_name_in_owner = true
-wait_time = 15.0
+wait_time = 30.0
 autostart = true
 
 [node name="RoundDisplay" type="Label" parent="."]

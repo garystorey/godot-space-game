@@ -23,7 +23,6 @@ var rng = RandomNumberGenerator.new()
 
 var asteroid_scene = preload("res://asteroid.tscn")
 const level_sfx = preload("uid://c25wdaajvcfhs")
-var start = preload("uid://c7cdxgg7tixdy").instantiate()
 
 
 func _ready() -> void:
@@ -39,7 +38,7 @@ func _on_dead():
 	score_timer.stop()
 	for asteroid in get_tree().get_nodes_in_group("Asteroids"):
 		asteroid.queue_free()
-	get_tree().root.add_child(start)
+	get_tree().change_scene_to_file("res://start.tscn")
 	queue_free()
 
 func _physics_process(_delta: float) -> void:
