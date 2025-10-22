@@ -300,38 +300,34 @@ func _apply_track(tween: Tween, track: Dictionary) -> bool:
         if not track.get("enabled", false):
                 return false
 
-        if track.get("requires_node2d", false) and not (parent is Node2D):
-                return false
-
-        if track.get("requires_control", false) and not (parent is Control):
-                return false
-
         var property_path: String = track.get("property", "")
         if property_path.is_empty():
                 return false
 
+        var duration: float = track.get("duration", 0.5)
+        var trans: Tween.TransitionType = track.get("trans", Tween.TRANS_LINEAR)
+        var ease: Tween.EaseType = track.get("ease", Tween.EASE_IN_OUT)
         var host: Tween = play_parallel ? tween.parallel() : tween
-        var from_value: Variant = _get_property_value(property_path)
+        var start_value: Variant = null
+        var use_yoyo := track.get("yoyo", false)
 
-        var forward: PropertyTweener = host.tween_property(
+        if use_yoyo:
+                start_value = _get_property_value(property_path)
+
+        host.tween_property(
                 parent,
                 property_path,
                 track.get("to"),
-                track.get("duration", 0.5)
-        )
-        forward.from(from_value)
-        forward.set_trans(track.get("trans", Tween.TRANS_LINEAR))
-        forward.set_ease(track.get("ease", Tween.EASE_IN_OUT))
+                duration
+        ).set_trans(trans).set_ease(ease)
 
-        if track.get("yoyo", false):
-                var backward: PropertyTweener = host.tween_property(
+        if use_yoyo:
+                host.tween_property(
                         parent,
                         property_path,
-                        from_value,
-                        track.get("duration", 0.5)
-                )
-                backward.set_trans(track.get("trans", Tween.TRANS_LINEAR))
-                backward.set_ease(track.get("ease", Tween.EASE_IN_OUT))
+                        start_value,
+                        duration
+                ).set_trans(trans).set_ease(ease)
 
         return true
 
@@ -349,14 +345,14 @@ func _refresh_tween_data() -> void:
 		&"alpha": _make_track_entry(alpha_enabled, P.alpha, alpha_to, alpha_duration, alpha_trans, alpha_ease, alpha_loop, alpha_yoyo),
 		&"self_modulate": _make_track_entry(self_modulate_enabled, P.self_modulate, self_modulate_to, self_modulate_duration, self_modulate_trans, self_modulate_ease, self_modulate_loop, self_modulate_yoyo),
 		&"self_alpha": _make_track_entry(self_alpha_enabled, P.self_alpha, self_alpha_to, self_alpha_duration, self_alpha_trans, self_alpha_ease, self_alpha_loop, self_alpha_yoyo),
-		&"skew": _make_track_entry(skew_enabled, P.skew, skew_to, skew_duration, skew_trans, skew_ease, skew_loop, skew_yoyo, true),
-		&"gpos_x": _make_track_entry(gpos_x_enabled, P.gpos_x, gpos_x_to, gpos_x_duration, gpos_x_trans, gpos_x_ease, gpos_x_loop, gpos_x_yoyo, true),
-		&"gpos_y": _make_track_entry(gpos_y_enabled, P.gpos_y, gpos_y_to, gpos_y_duration, gpos_y_trans, gpos_y_ease, gpos_y_loop, gpos_y_yoyo, true),
-		&"grot_deg": _make_track_entry(grot_enabled, P.grot_deg, grot_to_degrees, grot_duration, grot_trans, grot_ease, grot_loop, grot_yoyo, true),
-		&"gscale_x": _make_track_entry(gscale_x_enabled, P.gscale_x, gscale_x_to, gscale_x_duration, gscale_x_trans, gscale_x_ease, gscale_x_loop, gscale_x_yoyo, true),
-		&"gscale_y": _make_track_entry(gscale_y_enabled, P.gscale_y, gscale_y_to, gscale_y_duration, gscale_y_trans, gscale_y_ease, gscale_y_loop, gscale_y_yoyo, true),
-		&"size_x": _make_track_entry(size_x_enabled, P.size_x, size_x_to, size_x_duration, size_x_trans, size_x_ease, size_x_loop, size_x_yoyo, false, true),
-		&"size_y": _make_track_entry(size_y_enabled, P.size_y, size_y_to, size_y_duration, size_y_trans, size_y_ease, size_y_loop, size_y_yoyo, false, true),
+                &"skew": _make_track_entry(skew_enabled, P.skew, skew_to, skew_duration, skew_trans, skew_ease, skew_loop, skew_yoyo),
+                &"gpos_x": _make_track_entry(gpos_x_enabled, P.gpos_x, gpos_x_to, gpos_x_duration, gpos_x_trans, gpos_x_ease, gpos_x_loop, gpos_x_yoyo),
+                &"gpos_y": _make_track_entry(gpos_y_enabled, P.gpos_y, gpos_y_to, gpos_y_duration, gpos_y_trans, gpos_y_ease, gpos_y_loop, gpos_y_yoyo),
+                &"grot_deg": _make_track_entry(grot_enabled, P.grot_deg, grot_to_degrees, grot_duration, grot_trans, grot_ease, grot_loop, grot_yoyo),
+                &"gscale_x": _make_track_entry(gscale_x_enabled, P.gscale_x, gscale_x_to, gscale_x_duration, gscale_x_trans, gscale_x_ease, gscale_x_loop, gscale_x_yoyo),
+                &"gscale_y": _make_track_entry(gscale_y_enabled, P.gscale_y, gscale_y_to, gscale_y_duration, gscale_y_trans, gscale_y_ease, gscale_y_loop, gscale_y_yoyo),
+                &"size_x": _make_track_entry(size_x_enabled, P.size_x, size_x_to, size_x_duration, size_x_trans, size_x_ease, size_x_loop, size_x_yoyo),
+                &"size_y": _make_track_entry(size_y_enabled, P.size_y, size_y_to, size_y_duration, size_y_trans, size_y_ease, size_y_loop, size_y_yoyo),
 	}
 
 
@@ -368,9 +364,7 @@ func _make_track_entry(
         trans: Tween.TransitionType,
         ease: Tween.EaseType,
         loop: bool,
-        yoyo: bool,
-        requires_node2d: bool = false,
-        requires_control: bool = false
+        yoyo: bool
 ) -> Dictionary:
         return {
                 "enabled": enabled,
@@ -381,8 +375,6 @@ func _make_track_entry(
                 "ease": ease,
                 "loop": loop,
                 "yoyo": yoyo,
-                "requires_node2d": requires_node2d,
-                "requires_control": requires_control,
         }
 
 
