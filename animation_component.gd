@@ -265,34 +265,41 @@ func _set_editor_action(value: EditorAction) -> void:
 
 
 func play_enabled() -> Tween:
-	var t: Tween = parent.create_tween()
-	t.set_parallel(play_parallel)
+        var t: Tween = parent.create_tween()
+        t.set_parallel(play_parallel)
 
-	_refresh_tween_data()
-	var requires_loop := false
+        _refresh_tween_data()
+        var requires_loop := false
+        var has_tracks := false
 
-	if play_parallel:
-		for key in ALL_KEYS:
-			if _add_track_key(t, key, tween_data):
-				requires_loop = true
-	else:
-		for key in sequential_order:
-			if _add_track_key(t, key, tween_data):
-				requires_loop = true
+        var keys: Array[StringName] = play_parallel ? ALL_KEYS : sequential_order
 
-	if requires_loop:
-		t.set_loops()
+        for key in keys:
+                if not tween_data.has(key):
+                        continue
 
-	t.play()
-	return t
+                if _add_track_key(t, key, tween_data):
+                        has_tracks = true
+                        if tween_data[key].get("loop", false):
+                                requires_loop = true
+
+        if not has_tracks:
+                t.kill()
+                return t
+
+        if requires_loop:
+                t.set_loops()
+
+        t.play()
+        return t
 
 
 func _add_track_key(t: Tween, key: StringName, data_source: Dictionary) -> bool:
-	if not data_source.has(key):
-		return false
+        if not data_source.has(key):
+                return false
 
-	var data: Dictionary = data_source[key]
-	if not data.get("enabled", false):
+        var data: Dictionary = data_source[key]
+        if not data.get("enabled", false):
 		return false
 
 	if data.get("requires_node2d", false) and not (parent is Node2D):
@@ -301,22 +308,21 @@ func _add_track_key(t: Tween, key: StringName, data_source: Dictionary) -> bool:
 	if data.get("requires_control", false) and not (parent is Control):
 		return false
 
-	var track_loop: bool= data.get("loop", false)
-	var track_yoyo : bool = data.get("yoyo", false)
-	var property_path: String = data.get("property", "")
-	if property_path.is_empty():
-		return false
+        var track_yoyo : bool = data.get("yoyo", false)
+        var property_path: String = data.get("property", "")
+        if property_path.is_empty():
+                return false
 
-	_tween_property(
-		t,
-		property_path,
-		data.get("to"),
-		data.get("duration", 0.5),
-		data.get("trans", Tween.TRANS_LINEAR),
-		data.get("ease", Tween.EASE_IN_OUT),
-		track_yoyo
-	)
-	return track_loop
+        _tween_property(
+                t,
+                property_path,
+                data.get("to"),
+                data.get("duration", 0.5),
+                data.get("trans", Tween.TRANS_LINEAR),
+                data.get("ease", Tween.EASE_IN_OUT),
+                track_yoyo
+        )
+        return true
 
 
 func _refresh_tween_data() -> void:
