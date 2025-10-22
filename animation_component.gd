@@ -3,6 +3,8 @@
 class_name AnimateNode
 extends Node
 
+const NOTIFICATION_EDITOR_PROPERTY_CHANGED := Node.Notification.NOTIFICATION_EDITOR_PROPERTY_CHANGED
+
 const P := {
 	# CanvasItem (Node2D + Control)
 	"pos_x": "position:x",
@@ -369,28 +371,28 @@ func _make_track_entry(
 
 
 func _make_track_branch(t: Tween) -> Tween:
-	var branch
-	if play_parallel:
-		branch = t.parallel()
-	else:
-		branch = t.sequence()
-		branch.set_parallel(false)
-	return branch
+        var branch: Tween
+        if play_parallel:
+                branch = t.parallel()
+        else:
+                branch = t.sequence()
+                branch.set_parallel(false)
+        return branch
 
 
 func _tween_property(t: Tween, property_path: String, to_value: Variant, duration: float, trans: Tween.TransitionType, ease: Tween.EaseType, yoyo: bool) -> void:
-	var branch := _make_track_branch(t)
-	var from_value := _get_property_value(property_path)
+        var branch: Tween = _make_track_branch(t)
+        var from_value := _get_property_value(property_path)
 
-	var forward := branch.tween_property(parent, property_path, to_value, duration)
-	forward.from(from_value)
-	forward.set_trans(trans)
-	forward.set_ease(ease)
+        var forward: Tween = branch.tween_property(parent, property_path, to_value, duration)
+        forward.from(from_value)
+        forward.set_trans(trans)
+        forward.set_ease(ease)
 
-	if yoyo:
-		var backward := branch.tween_property(parent, property_path, from_value, duration)
-		backward.set_trans(trans)
-		backward.set_ease(ease)
+        if yoyo:
+                var backward: Tween = branch.tween_property(parent, property_path, from_value, duration)
+                backward.set_trans(trans)
+                backward.set_ease(ease)
 
 
 func _get_property_value(property_path: String) -> Variant:
@@ -412,7 +414,7 @@ func _get_configuration_warnings() -> PackedStringArray:
 		warnings.append("sequential_order contains unknown keys: %s" % [unknown])
 
 	# Duplicates
-	var seen := {}
+        var seen: Dictionary = {}
 	var dups: Array[StringName] = []
 	for key in sequential_order:
 		if seen.has(key):
