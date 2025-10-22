@@ -265,10 +265,11 @@ func _set_editor_action(value: EditorAction) -> void:
 
 
 func play_enabled() -> Tween:
-        var t: Tween = parent.create_tween()
-        t.set_parallel(play_parallel)
-
         _refresh_tween_data()
+
+        var tween: Tween = parent.create_tween()
+        tween.set_parallel(play_parallel)
+
         var requires_loop := false
         var has_tracks := false
 
@@ -278,50 +279,60 @@ func play_enabled() -> Tween:
                 if not tween_data.has(key):
                         continue
 
-                if _add_track_key(t, key, tween_data):
+                var track: Dictionary = tween_data[key]
+                if _apply_track(tween, track):
                         has_tracks = true
-                        if tween_data[key].get("loop", false):
+                        if track.get("loop", false):
                                 requires_loop = true
 
         if not has_tracks:
-                t.kill()
-                return t
+                tween.kill()
+                return tween
 
         if requires_loop:
-                t.set_loops()
+                tween.set_loops()
 
-        t.play()
-        return t
+        tween.play()
+        return tween
 
 
-func _add_track_key(t: Tween, key: StringName, data_source: Dictionary) -> bool:
-        if not data_source.has(key):
+func _apply_track(tween: Tween, track: Dictionary) -> bool:
+        if not track.get("enabled", false):
                 return false
 
-        var data: Dictionary = data_source[key]
-        if not data.get("enabled", false):
-		return false
+        if track.get("requires_node2d", false) and not (parent is Node2D):
+                return false
 
-	if data.get("requires_node2d", false) and not (parent is Node2D):
-		return false
+        if track.get("requires_control", false) and not (parent is Control):
+                return false
 
-	if data.get("requires_control", false) and not (parent is Control):
-		return false
-
-        var track_yoyo : bool = data.get("yoyo", false)
-        var property_path: String = data.get("property", "")
+        var property_path: String = track.get("property", "")
         if property_path.is_empty():
                 return false
 
-        _tween_property(
-                t,
+        var host: Tween = play_parallel ? tween.parallel() : tween
+        var from_value: Variant = _get_property_value(property_path)
+
+        var forward: PropertyTweener = host.tween_property(
+                parent,
                 property_path,
-                data.get("to"),
-                data.get("duration", 0.5),
-                data.get("trans", Tween.TRANS_LINEAR),
-                data.get("ease", Tween.EASE_IN_OUT),
-                track_yoyo
+                track.get("to"),
+                track.get("duration", 0.5)
         )
+        forward.from(from_value)
+        forward.set_trans(track.get("trans", Tween.TRANS_LINEAR))
+        forward.set_ease(track.get("ease", Tween.EASE_IN_OUT))
+
+        if track.get("yoyo", false):
+                var backward: PropertyTweener = host.tween_property(
+                        parent,
+                        property_path,
+                        from_value,
+                        track.get("duration", 0.5)
+                )
+                backward.set_trans(track.get("trans", Tween.TRANS_LINEAR))
+                backward.set_ease(track.get("ease", Tween.EASE_IN_OUT))
+
         return true
 
 
@@ -350,54 +361,29 @@ func _refresh_tween_data() -> void:
 
 
 func _make_track_entry(
-	enabled: bool,
-	property_path: String,
-	to_value: Variant,
-	duration: float,
-	trans: Tween.TransitionType,
-	tease: Tween.EaseType,
-	loop: bool,
-	yoyo: bool,
-	requires_node2d: bool = false,
-	requires_control: bool = false
+        enabled: bool,
+        property_path: String,
+        to_value: Variant,
+        duration: float,
+        trans: Tween.TransitionType,
+        ease: Tween.EaseType,
+        loop: bool,
+        yoyo: bool,
+        requires_node2d: bool = false,
+        requires_control: bool = false
 ) -> Dictionary:
-	return {
-		"enabled": enabled,
-		"property": property_path,
-		"to": to_value,
-		"duration": duration,
-		"trans": trans,
-		"ease": tease,
-		"loop": loop,
-		"yoyo": yoyo,
-		"requires_node2d": requires_node2d,
-		"requires_control": requires_control,
-	}
-
-
-func _make_track_branch(t: Tween) -> Tween:
-		var branch: Tween
-		if play_parallel:
-				branch = t.parallel()
-		else:
-				branch = t.sequence()
-				branch.set_parallel(false)
-		return branch
-
-
-func _tween_property(t: Tween, property_path: String, to_value: Variant, duration: float, trans: Tween.TransitionType, tease: Tween.EaseType, yoyo: bool) -> void:
-	var branch: Tween = _make_track_branch(t)
-	var from_value = _get_property_value(property_path)
-
-	var forward: PropertyTweener = branch.tween_property(parent, property_path, to_value, duration)
-	forward.from(from_value)
-	forward.set_trans(trans)
-	forward.set_ease(tease)
-
-	if yoyo:
-		var backward: PropertyTweener = branch.tween_property(parent, property_path, from_value, duration)
-		backward.set_trans(trans)
-		backward.set_ease(tease)
+        return {
+                "enabled": enabled,
+                "property": property_path,
+                "to": to_value,
+                "duration": duration,
+                "trans": trans,
+                "ease": ease,
+                "loop": loop,
+                "yoyo": yoyo,
+                "requires_node2d": requires_node2d,
+                "requires_control": requires_control,
+        }
 
 
 func _get_property_value(property_path: String) -> Variant:
