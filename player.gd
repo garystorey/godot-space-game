@@ -4,8 +4,8 @@ signal dead
 
 @onready var score_text: Label = %ScoreText
 @onready var lives_text: Label = %LivesText
-@onready var sfx: AudioStreamPlayer2D = %Sfx
 @onready var animate_node: AnimateNode = %AnimateNode
+@onready var ship_sfx: AudioStreamPlayer2D = %ShipSfx
 
 @export var max_lives: int = 5
 
@@ -32,7 +32,7 @@ func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
 
-	sfx.stream = HIT_SFX
+	ship_sfx.stream = HIT_SFX
 	current_lives = max_lives
 	lives_text.text = str(current_lives)
 
@@ -88,7 +88,8 @@ func _on_body_entered(body: Node) -> void:
 	var rb := body as RigidBody2D
 	rb.sleeping = false
 	animate_node.play_enabled()
-	sfx.play()
+	print('playing in player _on_body_entered')
+	ship_sfx.play()
 
 	var dir: Vector2 = rb.global_position - global_position
 	if dir == Vector2.ZERO:

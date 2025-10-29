@@ -29,7 +29,7 @@ func _ready() -> void:
 	round_timer.timeout.connect(_on_round_timer_timeout)
 	round_display_timer.timeout.connect(_on_display_timeout)
 	player.dead.connect(_on_dead)
-
+	print('firing sound in ready')
 	sfx.stream = LEVEL_SFX
 	round_text.text = str(0)
 	score_text.text = str(0)
@@ -90,6 +90,7 @@ func _on_round_timer_timeout() -> void:
 	max_scale += 0.05
 
 	var level := int(round_text.text)
+	print('firing sound in _on_round_timer_timoeout')
 	sfx.play()
 
 	level += 1

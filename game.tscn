@@ -46,13 +46,15 @@ texture = ExtResource("4_7jktm")
 [node name="AnimateNode" type="Node" parent="Player/Sprite2D"]
 unique_name_in_owner = true
 script = ExtResource("6_j5wjh")
-auto_play_on_ready = true
 sequential_order = Array[StringName]([&"pos_x", &"pos_y", &"rot_deg", &"scale_x", &"scale_y", &"pivot_x", &"pivot_y", &"modulate", &"alpha", &"self_modulate", &"self_alpha", &"skew", &"gpos_x", &"gpos_y", &"grot_deg", &"gscale_x", &"gscale_y", &"size_x", &"size_y"])
 modulate_enabled = true
-modulate_to = Color(0.57254905, 0.17254902, 0.9882353, 1)
-modulate_loop = true
+modulate_to = Color(0.87058824, 0, 0, 1)
+modulate_duration = 0.25
 modulate_yoyo = true
 metadata/_custom_type_script = "uid://dvronq2ujghfp"
+
+[node name="ShipSfx" type="AudioStreamPlayer2D" parent="Player/Sprite2D"]
+unique_name_in_owner = true
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Player"]
 unique_name_in_owner = true
