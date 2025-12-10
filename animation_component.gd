@@ -1,0 +1,493 @@
+@tool
+class_name AnimateNode
+extends Node
+
+
+const P := {
+	# CanvasItem (Node2D + Control)
+	"pos_x": "position:x",
+	"pos_y": "position:y",
+	"rot_deg": "rotation_degrees",
+	"scale_x": "scale:x",
+	"scale_y": "scale:y",
+	"pivot_x": "pivot_offset:x",
+	"pivot_y": "pivot_offset:y",
+	"modulate": "modulate",
+	"alpha": "modulate:a",
+	"self_modulate": "self_modulate",
+	"self_alpha": "self_modulate:a",
+	# Node2D-only
+	"skew": "skew",
+	"gpos_x": "global_position:x",
+	"gpos_y": "global_position:y",
+	"grot_deg": "global_rotation_degrees",
+	"gscale_x": "global_scale:x",
+	"gscale_y": "global_scale:y",
+	# Control-only
+	"size_x": "size:x",
+	"size_y": "size:y",
+}
+
+const ALL_KEYS: Array[StringName] = [
+	&"pos_x", &"pos_y", &"rot_deg",
+	&"scale_x", &"scale_y",
+	&"pivot_x", &"pivot_y",
+	&"modulate", &"alpha", &"self_modulate", &"self_alpha",
+	&"skew", &"gpos_x", &"gpos_y", &"grot_deg", &"gscale_x", &"gscale_y",
+	&"size_x", &"size_y"
+]
+
+enum EditorAction { NONE, RESET_ORDER }
+
+var parent: Node
+var tween_data: Dictionary = {}
+
+# Single-owner tween + start-state snapshot for safe resets
+var _active_tween: Tween
+var _start_snapshot: Dictionary = {} # property_path:String -> start_value:Variant
+
+@export_group("Playback")
+@export var play_parallel: bool = true
+@export var auto_play_on_ready: bool = false
+@export var sequential_order: Array[StringName] = []
+
+@export_group("Editor Utilities")
+@export var editor_action: EditorAction = EditorAction.NONE : set = _set_editor_action
+
+# ── Position X
+@export_group("Position X")
+@export var pos_x_enabled := false
+@export var pos_x_to := 0.0
+@export var pos_x_duration := 0.5
+@export var pos_x_trans: Tween.TransitionType = Tween.TRANS_SINE
+@export var pos_x_ease: Tween.EaseType = Tween.EASE_IN_OUT
+@export var pos_x_loop := false
+@export var pos_x_yoyo := false
+
+# ── Position Y
+@export_group("Position Y")
+@export var pos_y_enabled := false
+@export var pos_y_to := 0.0
+@export var pos_y_duration := 0.5
+@export var pos_y_trans: Tween.TransitionType = Tween.TRANS_SINE
+@export var pos_y_ease: Tween.EaseType = Tween.EASE_IN_OUT
+@export var pos_y_loop := false
+@export var pos_y_yoyo := false
+
+# ── Rotation (degrees)
+@export_group("Rotation (degrees)")
+@export var rot_enabled := false
+@export var rot_to_degrees := 0.0
+@export var rot_duration := 0.5
+@export var rot_trans: Tween.TransitionType = Tween.TRANS_SINE
+@export var rot_ease: Tween.EaseType = Tween.EASE_IN_OUT
+@export var rot_loop := false
+@export var rot_yoyo := false
+
+# ── Scale X
+@export_group("Scale X")
+@export var scale_x_enabled := false
+@export var scale_x_to := 1.0
+@export var scale_x_duration := 0.5
+@export var scale_x_trans: Tween.TransitionType = Tween.TRANS_SINE
+@export var scale_x_ease: Tween.EaseType = Tween.EASE_IN_OUT
+@export var scale_x_loop := false
+@export var scale_x_yoyo := false
+
+# ── Scale Y
+@export_group("Scale Y")
+@export var scale_y_enabled := false
+@export var scale_y_to := 1.0
+@export var scale_y_duration := 0.5
+@export var scale_y_trans: Tween.TransitionType = Tween.TRANS_SINE
+@export var scale_y_ease: Tween.EaseType = Tween.EASE_IN_OUT
+@export var scale_y_loop := false
+@export var scale_y_yoyo := false
+
+# ── Pivot Offset X
+@export_group("Pivot Offset X")
+@export var pivot_x_enabled := false
+@export var pivot_x_to := 0.0
+@export var pivot_x_duration := 0.5
+@export var pivot_x_trans: Tween.TransitionType = Tween.TRANS_SINE
+@export var pivot_x_ease: Tween.EaseType = Tween.EASE_IN_OUT
+@export var pivot_x_loop := false
+@export var pivot_x_yoyo := false
+
+# ── Pivot Offset Y
+@export_group("Pivot Offset Y")
+@export var pivot_y_enabled := false
+@export var pivot_y_to := 0.0
+@export var pivot_y_duration := 0.5
+@export var pivot_y_trans: Tween.TransitionType = Tween.TRANS_SINE
+@export var pivot_y_ease: Tween.EaseType = Tween.EASE_IN_OUT
+@export var pivot_y_loop := false
+@export var pivot_y_yoyo := false
+
+# ── Color / Alpha
+@export_group("Modulate (Color)")
+@export var modulate_enabled := false
+@export var modulate_to := Color(1, 1, 1, 1)
+@export var modulate_duration := 0.5
+@export var modulate_trans: Tween.TransitionType = Tween.TRANS_SINE
+@export var modulate_ease: Tween.EaseType = Tween.EASE_IN_OUT
+@export var modulate_loop := false
+@export var modulate_yoyo := false
+
+@export_group("Alpha (modulate.a)")
+@export var alpha_enabled := false
+@export var alpha_to := 1.0
+@export var alpha_duration := 0.5
+@export var alpha_trans: Tween.TransitionType = Tween.TRANS_SINE
+@export var alpha_ease: Tween.EaseType = Tween.EASE_IN_OUT
+@export var alpha_loop := false
+@export var alpha_yoyo := false
+
+@export_group("Self Modulate (Color)")
+@export var self_modulate_enabled := false
+@export var self_modulate_to := Color(1, 1, 1, 1)
+@export var self_modulate_duration := 0.5
+@export var self_modulate_trans: Tween.TransitionType = Tween.TRANS_SINE
+@export var self_modulate_ease: Tween.EaseType = Tween.EASE_IN_OUT
+@export var self_modulate_loop := false
+@export var self_modulate_yoyo := false
+
+@export_group("Self Alpha (self_modulate.a)")
+@export var self_alpha_enabled := false
+@export var self_alpha_to := 1.0
+@export var self_alpha_duration := 0.5
+@export var self_alpha_trans: Tween.TransitionType = Tween.TRANS_SINE
+@export var self_alpha_ease: Tween.EaseType = Tween.EASE_IN_OUT
+@export var self_alpha_loop := false
+@export var self_alpha_yoyo := false
+
+# ── Node2D-only
+@export_group("Skew (Node2D)")
+@export var skew_enabled := false
+@export var skew_to := 0.0
+@export var skew_duration := 0.5
+@export var skew_trans: Tween.TransitionType = Tween.TRANS_SINE
+@export var skew_ease: Tween.EaseType = Tween.EASE_IN_OUT
+@export var skew_loop := false
+@export var skew_yoyo := false
+
+@export_group("Global Position X (Node2D)")
+@export var gpos_x_enabled := false
+@export var gpos_x_to := 0.0
+@export var gpos_x_duration := 0.5
+@export var gpos_x_trans: Tween.TransitionType = Tween.TRANS_SINE
+@export var gpos_x_ease: Tween.EaseType = Tween.EASE_IN_OUT
+@export var gpos_x_loop := false
+@export var gpos_x_yoyo := false
+
+@export_group("Global Position Y (Node2D)")
+@export var gpos_y_enabled := false
+@export var gpos_y_to := 0.0
+@export var gpos_y_duration := 0.5
+@export var gpos_y_trans: Tween.TransitionType = Tween.TRANS_SINE
+@export var gpos_y_ease: Tween.EaseType = Tween.EASE_IN_OUT
+@export var gpos_y_loop := false
+@export var gpos_y_yoyo := false
+
+@export_group("Global Rotation ° (Node2D)")
+@export var grot_enabled := false
+@export var grot_to_degrees := 0.0
+@export var grot_duration := 0.5
+@export var grot_trans: Tween.TransitionType = Tween.TRANS_SINE
+@export var grot_ease: Tween.EaseType = Tween.EASE_IN_OUT
+@export var grot_loop := false
+@export var grot_yoyo := false
+
+@export_group("Global Scale X (Node2D)")
+@export var gscale_x_enabled := false
+@export var gscale_x_to := 1.0
+@export var gscale_x_duration := 0.5
+@export var gscale_x_trans: Tween.TransitionType = Tween.TRANS_SINE
+@export var gscale_x_ease: Tween.EaseType = Tween.EASE_IN_OUT
+@export var gscale_x_loop := false
+@export var gscale_x_yoyo := false
+
+@export_group("Global Scale Y (Node2D)")
+@export var gscale_y_enabled := false
+@export var gscale_y_to := 1.0
+@export var gscale_y_duration := 0.5
+@export var gscale_y_trans: Tween.TransitionType = Tween.TRANS_SINE
+@export var gscale_y_ease: Tween.EaseType = Tween.EASE_IN_OUT
+@export var gscale_y_loop := false
+@export var gscale_y_yoyo := false
+
+# ── Control-only
+@export_group("Size X (Control)")
+@export var size_x_enabled := false
+@export var size_x_to := 0.0
+@export var size_x_duration := 0.5
+@export var size_x_trans: Tween.TransitionType = Tween.TRANS_SINE
+@export var size_x_ease: Tween.EaseType = Tween.EASE_IN_OUT
+@export var size_x_loop := false
+@export var size_x_yoyo := false
+
+@export_group("Size Y (Control)")
+@export var size_y_enabled := false
+@export var size_y_to := 0.0
+@export var size_y_duration := 0.5
+@export var size_y_trans: Tween.TransitionType = Tween.TRANS_SINE
+@export var size_y_ease: Tween.EaseType = Tween.EASE_IN_OUT
+@export var size_y_loop := false
+@export var size_y_yoyo := false
+
+
+func _enter_tree() -> void:
+	if sequential_order.is_empty():
+		sequential_order.assign(ALL_KEYS)
+	_refresh_tween_data()
+
+
+func _ready() -> void:
+	parent = get_parent()
+	if parent == null:
+		push_warning("AnimateNode has no parent; using self.")
+		parent = self
+	_refresh_tween_data()
+	# Do not auto-run in editor
+	if auto_play_on_ready and not Engine.is_editor_hint():
+		play_enabled()
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_POSTINITIALIZE:
+		_refresh_tween_data()
+
+
+# Editor button handler (safe, non-recursive)
+func _set_editor_action(value: EditorAction) -> void:
+	if value == EditorAction.RESET_ORDER:
+		sequential_order.assign(ALL_KEYS)
+		set_deferred("editor_action", EditorAction.NONE)
+
+
+func play_enabled() -> Tween:
+	_refresh_tween_data()
+
+	# 1) If a tween is active, kill and RESTORE touched properties to their start values.
+	if _active_tween != null:
+		_active_tween.kill()
+		if not _start_snapshot.is_empty():
+			_restore_snapshot()
+		_start_snapshot.clear()
+		_active_tween = null
+
+	# 2) Build the next run's plan: keys to animate, with simple conflict resolution.
+	var keys: Array[StringName] = []
+	if play_parallel:
+		keys.assign(ALL_KEYS)
+	else:
+		keys.assign(sequential_order)
+
+	var modulate_on: bool = _is_track_enabled(&"modulate")
+	var alpha_on: bool = _is_track_enabled(&"alpha")
+	var self_mod_on: bool = _is_track_enabled(&"self_modulate")
+	var self_alpha_on: bool = _is_track_enabled(&"self_alpha")
+
+	# If both modulate and alpha variants are enabled, prefer full color (modulate).
+	var skip_alpha: bool = modulate_on and alpha_on
+	var skip_self_alpha: bool = self_mod_on and self_alpha_on
+
+	# 3) Snapshot start values for every track we are about to animate.
+	for key in keys:
+		if not tween_data.has(key):
+			continue
+		if key == &"alpha" and skip_alpha:
+			continue
+		if key == &"self_alpha" and skip_self_alpha:
+			continue
+
+		var track: Dictionary = tween_data[key]
+		if not track.get("enabled", false):
+			continue
+
+		var property_path_v: Variant = track.get("property", "")
+		var property_path: String = property_path_v as String
+		if property_path.is_empty():
+			continue
+
+		_start_snapshot[property_path] = _get_property_value(property_path)
+
+	# 4) Create and populate the tween
+	var tween: Tween = parent.create_tween() # no global set_parallel()
+	_active_tween = tween
+	_active_tween.finished.connect(_on_tween_finished)
+
+	var requires_loop := false
+	var has_tracks := false
+
+	for key in keys:
+		if not tween_data.has(key):
+			continue
+		if key == &"alpha" and skip_alpha:
+			continue
+		if key == &"self_alpha" and skip_self_alpha:
+			continue
+
+		var track2: Dictionary = tween_data[key]
+		if _apply_track(tween, track2):
+			has_tracks = true
+			if track2.get("loop", false):
+				requires_loop = true
+
+	if not has_tracks:
+		_active_tween = null
+		tween.kill()
+		return tween
+
+	if requires_loop:
+		tween.set_loops() # infinite
+
+	tween.play()
+	return tween
+
+
+func _apply_track(tween: Tween, track: Dictionary) -> bool:
+	if not track.get("enabled", false):
+		return false
+
+	var property_path_v: Variant = track.get("property", "")
+	var property_path: String = property_path_v as String
+	if property_path.is_empty():
+		return false
+
+	var duration: float = track.get("duration", 0.5)
+	var trans: Tween.TransitionType = track.get("trans", Tween.TRANS_LINEAR)
+	var tease: Tween.EaseType = track.get("ease", Tween.EASE_IN_OUT)
+
+	# Parallel between tracks if requested, sequential otherwise.
+	var host: Tween = tween
+	if play_parallel:
+		host = tween.parallel()
+
+	var use_yoyo: bool = track.get("yoyo", false)
+	var start_value: Variant = null
+	if use_yoyo:
+		# Use the snapshotted *start* value (consistent reset) rather than a possibly partial value.
+		if _start_snapshot.has(property_path):
+			start_value = _start_snapshot[property_path]
+		else:
+			start_value = _get_property_value(property_path)
+
+	host.tween_property(
+		parent,
+		property_path,
+		track.get("to"),
+		duration
+	).set_trans(trans).set_ease(tease)
+
+	if use_yoyo:
+		host.tween_property(
+			parent,
+			property_path,
+			start_value,
+			duration
+		).set_trans(trans).set_ease(tease)
+
+	return true
+
+
+func _restore_snapshot() -> void:
+	for property_path in _start_snapshot.keys():
+		_set_property_value(String(property_path), _start_snapshot[property_path])
+
+
+func _set_property_value(property_path: String, value: Variant) -> void:
+	if property_path.find(":") != -1:
+		parent.set_indexed(property_path, value)
+	else:
+		parent.set(property_path, value)
+
+
+func _refresh_tween_data() -> void:
+	tween_data = {
+		&"pos_x": _make_track_entry(pos_x_enabled, P.pos_x, pos_x_to, pos_x_duration, pos_x_trans, pos_x_ease, pos_x_loop, pos_x_yoyo),
+		&"pos_y": _make_track_entry(pos_y_enabled, P.pos_y, pos_y_to, pos_y_duration, pos_y_trans, pos_y_ease, pos_y_loop, pos_y_yoyo),
+		&"rot_deg": _make_track_entry(rot_enabled, P.rot_deg, rot_to_degrees, rot_duration, rot_trans, rot_ease, rot_loop, rot_yoyo),
+		&"scale_x": _make_track_entry(scale_x_enabled, P.scale_x, scale_x_to, scale_x_duration, scale_x_trans, scale_x_ease, scale_x_loop, scale_x_yoyo),
+		&"scale_y": _make_track_entry(scale_y_enabled, P.scale_y, scale_y_to, scale_y_duration, scale_y_trans, scale_y_ease, scale_y_loop, scale_y_yoyo),
+		&"pivot_x": _make_track_entry(pivot_x_enabled, P.pivot_x, pivot_x_to, pivot_x_duration, pivot_x_trans, pivot_x_ease, pivot_x_loop, pivot_x_yoyo),
+		&"pivot_y": _make_track_entry(pivot_y_enabled, P.pivot_y, pivot_y_to, pivot_y_duration, pivot_y_trans, pivot_y_ease, pivot_y_loop, pivot_y_yoyo),
+		&"modulate": _make_track_entry(modulate_enabled, P.modulate, modulate_to, modulate_duration, modulate_trans, modulate_ease, modulate_loop, modulate_yoyo),
+		&"alpha": _make_track_entry(alpha_enabled, P.alpha, alpha_to, alpha_duration, alpha_trans, alpha_ease, alpha_loop, alpha_yoyo),
+		&"self_modulate": _make_track_entry(self_modulate_enabled, P.self_modulate, self_modulate_to, self_modulate_duration, self_modulate_trans, self_modulate_ease, self_modulate_loop, self_modulate_yoyo),
+		&"self_alpha": _make_track_entry(self_alpha_enabled, P.self_alpha, self_alpha_to, self_alpha_duration, self_alpha_trans, self_alpha_ease, self_alpha_loop, self_alpha_yoyo),
+		&"skew": _make_track_entry(skew_enabled, P.skew, skew_to, skew_duration, skew_trans, skew_ease, skew_loop, skew_yoyo),
+		&"gpos_x": _make_track_entry(gpos_x_enabled, P.gpos_x, gpos_x_to, gpos_x_duration, gpos_x_trans, gpos_x_ease, gpos_x_loop, gpos_x_yoyo),
+		&"gpos_y": _make_track_entry(gpos_y_enabled, P.gpos_y, gpos_y_to, gpos_y_duration, gpos_y_trans, gpos_y_ease, gpos_y_loop, gpos_y_yoyo),
+		&"grot_deg": _make_track_entry(grot_enabled, P.grot_deg, grot_to_degrees, grot_duration, grot_trans, grot_ease, grot_loop, grot_yoyo),
+		&"gscale_x": _make_track_entry(gscale_x_enabled, P.gscale_x, gscale_x_to, gscale_x_duration, gscale_x_trans, gscale_x_ease, gscale_x_loop, gscale_x_yoyo),
+		&"gscale_y": _make_track_entry(gscale_y_enabled, P.gscale_y, gscale_y_to, gscale_y_duration, gscale_y_trans, gscale_y_ease, gscale_y_loop, gscale_y_yoyo),
+		&"size_x": _make_track_entry(size_x_enabled, P.size_x, size_x_to, size_x_duration, size_x_trans, size_x_ease, size_x_loop, size_x_yoyo),
+		&"size_y": _make_track_entry(size_y_enabled, P.size_y, size_y_to, size_y_duration, size_y_trans, size_y_ease, size_y_loop, size_y_yoyo),
+	}
+
+
+func _make_track_entry(
+	enabled: bool,
+	property_path: String,
+	to_value: Variant,
+	duration: float,
+	trans: Tween.TransitionType,
+	tease: Tween.EaseType,
+	loop: bool,
+	yoyo: bool
+) -> Dictionary:
+	return {
+		"enabled": enabled,
+		"property": property_path,
+		"to": to_value,
+		"duration": duration,
+		"trans": trans,
+		"ease": tease,
+		"loop": loop,
+		"yoyo": yoyo,
+	}
+
+
+func _get_property_value(property_path: String) -> Variant:
+	if property_path.find(":") != -1:
+		return parent.get_indexed(property_path)
+	return parent.get(property_path)
+
+
+func _is_track_enabled(key: StringName) -> bool:
+	if not tween_data.has(key):
+		return false
+	var d: Dictionary = tween_data[key]
+	return (d.get("enabled", false)) as bool
+
+
+func _on_tween_finished() -> void:
+	# Clear bookkeeping when a run completes naturally.
+	_active_tween = null
+	_start_snapshot.clear()
+
+
+# Editor-time validation messages
+func _get_configuration_warnings() -> PackedStringArray:
+	var warnings: PackedStringArray = []
+
+	# Unknown keys
+	var unknown: Array[StringName] = []
+	for key in sequential_order:
+		if not ALL_KEYS.has(key):
+			unknown.append(key)
+	if not unknown.is_empty():
+		warnings.append("sequential_order contains unknown keys: %s" % [unknown])
+
+	# Duplicates
+	var seen: Dictionary = {}
+	var dups: Array[StringName] = []
+	for key in sequential_order:
+		if seen.has(key):
+			dups.append(key)
+		else:
+			seen[key] = true
+	if not dups.is_empty():
+		warnings.append("sequential_order contains duplicate keys: %s" % [dups])
+
+	return warnings
