@@ -88,7 +88,6 @@ func _on_body_entered(body: Node) -> void:
 	var rb := body as RigidBody2D
 	rb.sleeping = false
 	animate_node.play_enabled()
-	print('playing in player _on_body_entered')
 	ship_sfx.play()
 
 	var dir: Vector2 = rb.global_position - global_position
